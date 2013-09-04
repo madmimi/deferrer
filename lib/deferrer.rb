@@ -25,7 +25,10 @@ module Deferrer
 
     count = redis.rpush(key, encode(item))
 
-    redis.zadd(LIST_KEY, score, key)
+    # set score only on first update
+    if count == 1
+      redis.zadd(LIST_KEY, score, key)
+    end
   end
 
   def self.next_item

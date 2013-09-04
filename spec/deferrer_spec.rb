@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 class CarDeferrer
-
   def self.perform(car)
     car.upcase
   end
@@ -46,12 +45,19 @@ describe Deferrer do
 
     it "returns last update of an item" do
       Deferrer.defer_at(Time.now - 3, identifier, CarDeferrer, car)
-      Deferrer.defer_at(Time.now - 2, identifier, CarDeferrer, car2) # last update
+      Deferrer.defer_at(Time.now - 2, identifier, CarDeferrer, car2)
 
       item = Deferrer.next_item
 
       item['class'].should == CarDeferrer.to_s
       item['args'].should == [car2]
+    end
+
+    it "keep the old score value" do
+      Deferrer.defer_at(Time.now - 3, identifier, CarDeferrer, car)
+      Deferrer.defer_at(Time.now + 1, identifier, CarDeferrer, car2)
+
+      Deferrer.next_item.should_not be_nil
     end
 
     it "returns nil when no next item" do
