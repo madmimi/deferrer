@@ -7,9 +7,11 @@ module Deferrer
 
   autoload :JsonEncoding,  'deferrer/json_encoding'
   autoload :Configuration, 'deferrer/configuration'
+  autoload :Runner,        'deferrer/runner'
 
   extend Configuration
   extend JsonEncoding
+  extend Runner
 
   def self.defer_in(number_of_seconds_from_now, identifier, klass, *args)
     timestamp = Time.now + number_of_seconds_from_now
@@ -21,7 +23,8 @@ module Deferrer
     key = item_key(identifier)
     score = calculate_score(timestamp)
 
-    redis.rpush(key, encode(item))
+    count = redis.rpush(key, encode(item))
+
     redis.zadd(LIST_KEY, score, key)
   end
 
