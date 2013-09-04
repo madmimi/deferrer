@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = Deferrer::VERSION
   spec.authors       = ["Dalibor Nasevic"]
   spec.email         = ["dalibor.nasevic@gmail.com"]
-  spec.description   = %q{TODO: Write a gem description}
-  spec.summary       = %q{TODO: Write a gem summary}
+  spec.description   = %q{Defers executions for an interval and runs only the last one}
+  spec.summary       = %q{Defers executions for an interval and runs only the last one}
   spec.homepage      = ""
   spec.license       = "MIT"
 
@@ -18,6 +18,8 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "redis"
+  spec.add_dependency "multi_json"
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
 end
