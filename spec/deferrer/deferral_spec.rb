@@ -6,12 +6,12 @@ class CarDeferrer
   end
 end
 
-describe Deferrer do
+describe Deferrer::Deferral do
   let(:car) { 'car' }
   let(:car2) { 'car2' }
   let(:identifier) { 'car1' }
   let(:redis) { Deferrer.redis }
-  let(:list_key) { Deferrer::LIST_KEY }
+  let(:list_key) { Deferrer::Deferral::LIST_KEY }
 
   before :each do
     redis.flushall

@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = Deferrer::VERSION
   spec.authors       = ["Dalibor Nasevic"]
   spec.email         = ["dalibor.nasevic@gmail.com"]
-  spec.description   = %q{Schedule execution and run only the last update}
-  spec.summary       = %q{Schedule execution and run only the last update at scheduled time}
+  spec.description   = %q{Defer executions and run only the last update}
+  spec.summary       = %q{Defer executions and run only the last update at the scheduled time}
   spec.homepage      = ""
   spec.license       = "MIT"
 

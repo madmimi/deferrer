@@ -1,6 +1,8 @@
 # Deferrer
 
-Schedule execution and then run only the last update at scheduled time
+Defer executions and run only the last update at the scheduled time
+
+
 
 ## Installation
 
@@ -10,38 +12,47 @@ Add this line to your application's Gemfile:
 
 And then execute:
 
-    $ bundle
+    $ bundle install
 
 Or install it yourself as:
 
     $ gem install deferrer
 
+
+
 ## Usage
 
-Setup redis and deferrer classes
+Configure redis
 
-    # setup redis
     Deferrer.redis_config = { :host => "localhost", :port => 6379 }
 
-    # define deferrer class (must have perform class method)
-    class CarDeferrer
-      def self.perform(car)
-        p car.upcase
+
+Define deferrer class (must have perform class method)
+
+    class NameDeferrer
+      def self.perform(first_name, last_name)
+        puts "#{first_name} #{last_name}".upcase
       end
     end
 
-Start worker
+
+Start a worker process. It needs to have redis configured and access to deferrer classes.
 
     Deferrer.run
 
+
 Defer some executions
 
-    Deferrer.defer_in(5, 'car-1', CarDeferrer, 'car')
-    Deferrer.defer_in(6, 'car-1', CarDeferrer, 'car')
-    Deferrer.defer_in(9, 'car-1', CarDeferrer, 'car')
+    Deferrer.defer_in(5, 'identifier', NameDeferrer, 'User', '1')
+    Deferrer.defer_in(6, 'identifier', NameDeferrer, 'User', '2')
+    Deferrer.defer_in(9, 'identifier', NameDeferrer, 'User', '3')
 
 
-After 5 seconds, it will execute only once `CarDeferrer.perform('car')`.
+It will stack all defered executions per identifier until first timeout expires (5 seconds) and then it will only execute the last update for the expired identifier:
+
+    NameDeferrer.perform('User', '3') => USER 3
+
+
 
 ## Contributing
 
