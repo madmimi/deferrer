@@ -18,11 +18,7 @@ Or install it yourself as:
 
 ## Usage
 
-Start the 'deferrer' runner
-
-    bundle exec ./bin/deferrer.rb
-
-Setup redis, define deferrer class and defer some executions
+Setup redis and deferrer classes
 
     # setup redis
     Deferrer.redis_config = { :host => "localhost", :port => 6379 }
@@ -30,16 +26,22 @@ Setup redis, define deferrer class and defer some executions
     # define deferrer class (must have perform class method)
     class CarDeferrer
       def self.perform(car)
-        car.upcase
+        p car.upcase
       end
     end
 
-    # defer some executions
+Start worker
+
+    Deferrer.run
+
+Defer some executions
+
     Deferrer.defer_in(5, 'car-1', CarDeferrer, 'car')
     Deferrer.defer_in(6, 'car-1', CarDeferrer, 'car')
     Deferrer.defer_in(9, 'car-1', CarDeferrer, 'car')
 
-    # after 5 seconds, it will execute only once CarDeferrer.perform('car')
+
+After 5 seconds, it will execute only once `CarDeferrer.perform('car')`.
 
 ## Contributing
 
