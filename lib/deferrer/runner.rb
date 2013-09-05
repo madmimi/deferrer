@@ -1,21 +1,31 @@
 module Deferrer
   module Runner
 
-    LOOP_FREQUENCY = 0.1
+    def run(options)
+      loop_frequency = options[:loop_frequency] || 0.1
+      logger = options[:logger] || nil
 
-    def run
       while true do
-
-        # loop all the time if you get items from redis
+        # loop while there're items to process
         while item = next_item
-          klass = Module.const_get(item['class'])
-          args  = item['args']
+          begin
+            klass = constantize(item['class'])
+            args  = item['args']
 
-          klass.send(:perform, *args)
+            logger.info("Executing: #{item['key']}") if logger
+
+            klass.send(:perform, *args)
+          rescue Exception => e
+            logger.error("Error: #{e.class}: #{e.detail}") if logger
+          end
         end
 
-        sleep LOOP_FREQUENCY
+        sleep loop_frequency
       end
+    end
+
+    def constantize(klass_string)
+      klass_string.split('::').inject(Object) {|memo,name| memo = memo.const_get(name); memo}
     end
   end
 end

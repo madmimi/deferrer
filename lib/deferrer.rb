@@ -41,6 +41,7 @@ module Deferrer
     if key
       _, item = redis.brpop(key, 0)
       decoded_item = decode(item) if item
+      decoded_item['key'] = key
 
       remove(key)
     end
