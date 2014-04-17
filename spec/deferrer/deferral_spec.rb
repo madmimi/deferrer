@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'timeout'
 
 class CarDeferrer
   def self.perform(car)
@@ -14,7 +15,7 @@ describe Deferrer::Deferral do
   let(:list_key) { Deferrer::Deferral::LIST_KEY }
 
   before :each do
-    redis.flushall
+    redis.flushdb
   end
 
   describe ".defer_at" do
@@ -72,6 +73,13 @@ describe Deferrer::Deferral do
       redis.zrangebyscore(list_key, '-inf', Time.now.to_f, :limit => [0, 1]).first.should be_nil
       redis.exists(Deferrer.item_key(identifier)).should be_false
       Deferrer.next_item.should be_nil
+    end
+
+    it "doesn't block on empty lists" do
+      Deferrer.defer_in(-1, identifier, CarDeferrer, car)
+      redis.del Deferrer.item_key(identifier)
+      Timeout::timeout(2) { Deferrer.next_item.should be_nil }
+      redis.zrangebyscore(list_key, '-inf', 'inf', :limit => [0, 1]).first.should be_nil
     end
   end
 end
