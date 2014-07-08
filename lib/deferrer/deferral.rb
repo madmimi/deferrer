@@ -33,9 +33,11 @@ module Deferrer
       key = redis.zrangebyscore(LIST_KEY, '-inf', score, :limit => [0, 1]).first
 
       if key
-        _, item = redis.brpop(key, 0)
-        decoded_item = decode(item) if item
-        decoded_item['key'] = key
+        item = redis.rpop(key)
+        if item
+          decoded_item = decode(item)
+          decoded_item['key'] = key
+        end
 
         remove(key)
       end
