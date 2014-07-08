@@ -3,7 +3,19 @@ require 'timeout'
 
 class CarDeferrer
   def self.perform(car)
-    car.upcase
+  end
+end
+
+class Logger
+  def self.info(message)
+  end
+
+  def self.error(message)
+  end
+end
+
+class InvalidLogger
+  def self.error(message)
   end
 end
 
@@ -18,6 +30,26 @@ describe Deferrer::Deferral do
     redis.flushdb
   end
 
+  describe "run" do
+    it "processes jobs" do
+      CarDeferrer.should_receive(:perform).with(car)
+      Deferrer.defer_in(-1, identifier, CarDeferrer, car)
+      Deferrer.run(single_run: true)
+    end
+
+    it "logs info messages if logger provided" do
+      Logger.should_receive(:info).with("Executing: deferred:#{identifier}")
+      Deferrer.defer_in(-1, identifier, CarDeferrer, car)
+      Deferrer.run(single_run: true, logger: Logger)
+    end
+
+    it "logs error messages if logger provided" do
+      InvalidLogger.should_receive(:error).with("Error: NoMethodError: undefined method `info' for InvalidLogger:Class")
+      Deferrer.defer_in(-1, identifier, CarDeferrer, car)
+      Deferrer.run(single_run: true, logger: InvalidLogger)
+    end
+  end
+
   describe ".defer_at" do
     it "deferrs at given time" do
       Deferrer.defer_at(Time.now, identifier, CarDeferrer, car)
@@ -26,7 +58,7 @@ describe Deferrer::Deferral do
       redis.exists(Deferrer.item_key(identifier)).should be_true
     end
 
-    it "deferrs in given interval" do
+    it "defers in given interval" do
       Deferrer.defer_in(1, identifier, CarDeferrer, car)
 
       redis.zrangebyscore(list_key, '-inf', (Time.now + 1).to_f, :limit => [0, 1]).first.should_not be_nil
@@ -78,6 +110,7 @@ describe Deferrer::Deferral do
     it "doesn't block on empty lists" do
       Deferrer.defer_in(-1, identifier, CarDeferrer, car)
       redis.del Deferrer.item_key(identifier)
+
       Timeout::timeout(2) { Deferrer.next_item.should be_nil }
       redis.zrangebyscore(list_key, '-inf', 'inf', :limit => [0, 1]).first.should be_nil
     end
