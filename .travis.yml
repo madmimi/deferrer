@@ -5,4 +5,6 @@ cache:
 notifications:
   email:
     - dalibor.nasevic@gmail.com
+services:
+  - redis-server
 script: bundle exec rspec spec
