@@ -4,8 +4,9 @@ module Deferrer
     LIST_KEY = :deferred_list
 
     def run(options = {})
-      loop_frequency = options[:loop_frequency] || 0.1
-      logger = options[:logger] || nil
+      loop_frequency = options.fetch(:loop_frequency, 0.1)
+      logger         = options.fetch(:logger, nil)
+      single_run     = options.fetch(:single_run, false)
 
       loop do
         while item = next_item
@@ -17,10 +18,11 @@ module Deferrer
 
             klass.send(:perform, *args)
           rescue Exception => e
-            logger.error("Error: #{e.class}: #{e.detail}") if logger
+            logger.error("Error: #{e.class}: #{e.message}") if logger
           end
         end
 
+        break if single_run
         sleep loop_frequency
       end
     end
