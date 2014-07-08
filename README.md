@@ -1,3 +1,5 @@
+![Travis status](https://travis-ci.org/madmimi/deferrer.png)
+
 # Deferrer
 
 Defer executions and run only the last update at the scheduled time
