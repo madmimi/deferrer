@@ -4,6 +4,9 @@ require 'timeout'
 class CarDeferrer
   def self.perform(car)
   end
+
+  def self.callback
+  end
 end
 
 class Logger
@@ -47,6 +50,18 @@ describe Deferrer::Deferral do
       InvalidLogger.should_receive(:error).with("Error: NoMethodError: undefined method `info' for InvalidLogger:Class")
       Deferrer.defer_in(-1, identifier, CarDeferrer, car)
       Deferrer.run(single_run: true, logger: InvalidLogger)
+    end
+
+    it "runs before callback" do
+      CarDeferrer.should_receive(:callback)
+      Deferrer.defer_in(-1, identifier, CarDeferrer, car)
+      Deferrer.run(single_run: true, before_each: Proc.new { CarDeferrer.callback })
+    end
+
+    it "runs after callback" do
+      CarDeferrer.should_receive(:callback)
+      Deferrer.defer_in(-1, identifier, CarDeferrer, car)
+      Deferrer.run(single_run: true, after_each: Proc.new { CarDeferrer.callback })
     end
   end
 
