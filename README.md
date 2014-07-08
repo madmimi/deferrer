@@ -3,7 +3,6 @@
 Defer executions and run only the last update at the scheduled time
 
 
-
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -38,7 +37,14 @@ Define deferrer class (must have perform class method)
 
 Start a worker process. It needs to have redis configured and access to deferrer classes.
 
-    Deferrer.run
+    Deferrer.run(options = {})
+
+    # Following `options` are available:
+    #   loop_frequency - sleep between loops, default to 0.1 seconds
+    #   logger         - logging mechanism, needs to respond to `info` and `error`
+    #   before_each    - callback to run before processing an item, needs to respond to `call`
+    #   after_each     - callback to run after processing an item, needs to respond to `call`
+    #   single_run     - process items only for a single loop, useful for testing
 
 
 Defer some executions
