@@ -35,11 +35,11 @@ Deferrer.redis_config = { :host => "localhost", :port => 6379 }
 ```
 
 
-Define deferrer class (must have perform class method)
+Define deferrer class (must have perform instance method)
 
 ```ruby
 class NameDeferrer
-  def self.perform(first_name, last_name)
+  def perform(first_name, last_name)
     puts "#{first_name} #{last_name}".upcase
   end
 end
@@ -72,7 +72,7 @@ Deferrer.defer_in(9, 'identifier', NameDeferrer, 'User', '3')
 It will stack all defered executions per identifier until first timeout expires (5 seconds) and then it will only execute the last update for the expired identifier:
 
 ```ruby
-NameDeferrer.perform('User', '3') => USER 3
+NameDeferrer.new.perform('User', '3') => USER 3
 ```
 
 

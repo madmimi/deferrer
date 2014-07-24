@@ -5,6 +5,7 @@ module Deferrer
   autoload :Configuration, 'deferrer/configuration'
   autoload :JsonEncoding,  'deferrer/json_encoding'
   autoload :Runner,        'deferrer/runner'
+  autoload :Job,           'deferrer/job'
 
   LIST_KEY        = 'deferred_list'
   ITEM_KEY_PREFIX = 'deferred'
