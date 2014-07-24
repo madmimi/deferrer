@@ -77,10 +77,13 @@ module Deferrer
 
       @logger.info("Executing: #{item['key']}") if @logger
 
-      klass.send(:perform, *args)
+      begin
+        klass.send(:perform, *args)
+      rescue Exception => e
+        @logger.error("Error: #{e.class}: #{e.message}") if @logger
+      end
+
       @after_each.call if @after_each
-    rescue Exception => e
-      @logger.error("Error: #{e.class}: #{e.message}") if @logger
     end
 
     def build_item(klass, args)

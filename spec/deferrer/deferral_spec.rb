@@ -9,15 +9,16 @@ class CarDeferrer
   end
 end
 
+class InvalidDeferrer
+  def self.perform(car)
+    raise 'error'
+  end
+end
+
 class Logger
   def self.info(message)
   end
 
-  def self.error(message)
-  end
-end
-
-class InvalidLogger
   def self.error(message)
   end
 end
@@ -47,9 +48,9 @@ describe Deferrer::Deferral do
     end
 
     it "logs error messages if logger provided" do
-      expect(InvalidLogger).to receive(:error).with("Error: NoMethodError: undefined method `info' for InvalidLogger:Class")
-      Deferrer.defer_in(-1, identifier, CarDeferrer, car)
-      Deferrer.run(single_run: true, logger: InvalidLogger)
+      expect(Logger).to receive(:error).with("Error: RuntimeError: error")
+      Deferrer.defer_in(-1, identifier, InvalidDeferrer, car)
+      Deferrer.run(single_run: true, logger: Logger)
     end
 
     it "runs before callback" do
