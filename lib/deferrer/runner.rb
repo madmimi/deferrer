@@ -1,9 +1,5 @@
 module Deferrer
-  module Deferral
-
-    LIST_KEY        = 'deferred_list'
-    ITEM_KEY_PREFIX = 'deferred'
-
+  module Runner
     def run(options = {})
       loop_frequency = options.fetch(:loop_frequency, 0.1)
       single_run     = options.fetch(:single_run, false)

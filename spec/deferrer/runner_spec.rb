@@ -23,16 +23,12 @@ class Logger
   end
 end
 
-def item_key(identifier)
-  "#{Deferrer::Deferral::ITEM_KEY_PREFIX}:#{identifier}"
-end
-
-describe Deferrer::Deferral do
+describe Deferrer::Runner do
   let(:car) { 'car' }
   let(:car2) { 'car2' }
   let(:identifier) { 'car1' }
   let(:redis) { Deferrer.redis }
-  let(:list_key) { Deferrer::Deferral::LIST_KEY }
+  let(:list_key) { Deferrer::LIST_KEY }
 
   before :each do
     redis.flushdb
