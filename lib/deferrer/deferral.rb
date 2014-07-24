@@ -53,14 +53,13 @@ module Deferrer
     end
 
     def defer_at(timestamp, identifier, klass, *args)
-      item = build_item(klass, args)
-      key = item_key(identifier)
-      score = calculate_score(timestamp)
-
+      item  = build_item(klass, args)
+      key   = item_key(identifier)
       count = redis.rpush(key, encode(item))
 
       # set score only on first update
       if count == 1
+        score = calculate_score(timestamp)
         redis.zadd(LIST_KEY, score, key)
       end
     end
