@@ -9,6 +9,12 @@ class CarDeferrer
   end
 end
 
+class InvalidDeferrer
+  def self.perform(car)
+    raise 'error'
+  end
+end
+
 class Logger
   def self.info(message)
   end
@@ -17,17 +23,12 @@ class Logger
   end
 end
 
-class InvalidLogger
-  def self.error(message)
-  end
-end
-
-describe Deferrer::Deferral do
+describe Deferrer::Runner do
   let(:car) { 'car' }
   let(:car2) { 'car2' }
   let(:identifier) { 'car1' }
   let(:redis) { Deferrer.redis }
-  let(:list_key) { Deferrer::Deferral::LIST_KEY }
+  let(:list_key) { Deferrer::LIST_KEY }
 
   before :each do
     redis.flushdb
@@ -47,9 +48,9 @@ describe Deferrer::Deferral do
     end
 
     it "logs error messages if logger provided" do
-      expect(InvalidLogger).to receive(:error).with("Error: NoMethodError: undefined method `info' for InvalidLogger:Class")
-      Deferrer.defer_in(-1, identifier, CarDeferrer, car)
-      Deferrer.run(single_run: true, logger: InvalidLogger)
+      expect(Logger).to receive(:error).with("Error: RuntimeError: error")
+      Deferrer.defer_in(-1, identifier, InvalidDeferrer, car)
+      Deferrer.run(single_run: true, logger: Logger)
     end
 
     it "runs before callback" do
@@ -70,14 +71,16 @@ describe Deferrer::Deferral do
       Deferrer.defer_at(Time.now, identifier, CarDeferrer, car)
 
       expect(redis.zrangebyscore(list_key, '-inf', Time.now.to_f, :limit => [0, 1]).first).not_to be_nil
-      expect(redis.exists(Deferrer.item_key(identifier))).to be_truthy
+      expect(redis.exists(item_key(identifier))).to be_truthy
     end
+  end
 
+  describe ".defer_in" do
     it "defers in given interval" do
       Deferrer.defer_in(1, identifier, CarDeferrer, car)
 
       expect(redis.zrangebyscore(list_key, '-inf', (Time.now + 1).to_f, :limit => [0, 1]).first).not_to be_nil
-      expect(redis.exists(Deferrer.item_key(identifier))).to be_truthy
+      expect(redis.exists(item_key(identifier))).to be_truthy
     end
   end
 
@@ -118,13 +121,13 @@ describe Deferrer::Deferral do
       item = Deferrer.next_item
 
       expect(redis.zrangebyscore(list_key, '-inf', Time.now.to_f, :limit => [0, 1]).first).to be_nil
-      expect(redis.exists(Deferrer.item_key(identifier))).to be_falsey
+      expect(redis.exists(item_key(identifier))).to be_falsey
       expect(Deferrer.next_item).to be_nil
     end
 
     it "doesn't block on empty lists" do
       Deferrer.defer_in(-1, identifier, CarDeferrer, car)
-      redis.del Deferrer.item_key(identifier)
+      redis.del(item_key(identifier))
 
       Timeout::timeout(2) { expect(Deferrer.next_item).to be_nil }
       expect(redis.zrangebyscore(list_key, '-inf', 'inf', :limit => [0, 1]).first).to be_nil
