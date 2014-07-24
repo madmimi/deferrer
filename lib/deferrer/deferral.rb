@@ -1,7 +1,8 @@
 module Deferrer
   module Deferral
 
-    LIST_KEY = :deferred_list
+    LIST_KEY        = 'deferred_list'
+    ITEM_KEY_PREFIX = 'deferred'
 
     def run(options = {})
       loop_frequency = options.fetch(:loop_frequency, 0.1)
@@ -40,13 +41,6 @@ module Deferrer
       decoded_item
     end
 
-    def constantize(klass_string)
-      klass_string.split('::').inject(Object) do |object, name|
-        object = object.const_get(name)
-        object
-      end
-    end
-
     def defer_in(number_of_seconds_from_now, identifier, klass, *args)
       timestamp = Time.now + number_of_seconds_from_now
       defer_at(timestamp, identifier, klass, *args)
@@ -57,10 +51,6 @@ module Deferrer
       item = build_item(klass, args)
 
       push_item(key, item, timestamp)
-    end
-
-    def item_key(identifier)
-      "deferred:#{identifier}"
     end
 
     private
@@ -84,6 +74,10 @@ module Deferrer
       {'class' => klass.to_s, 'args' => args}
     end
 
+    def item_key(identifier)
+      "#{ITEM_KEY_PREFIX}:#{identifier}"
+    end
+
     def push_item(key, item, timestamp)
       count = redis.rpush(key, encode(item))
 
@@ -105,6 +99,13 @@ module Deferrer
         redis.zrem(LIST_KEY, key)
       end
       redis.unwatch
+    end
+
+    def constantize(klass_string)
+      klass_string.split('::').inject(Object) do |object, name|
+        object = object.const_get(name)
+        object
+      end
     end
   end
 end
