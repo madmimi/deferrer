@@ -41,7 +41,10 @@ module Deferrer
     end
 
     def constantize(klass_string)
-      klass_string.split('::').inject(Object) {|memo,name| memo = memo.const_get(name); memo}
+      klass_string.split('::').inject(Object) do |object, name|
+        object = object.const_get(name)
+        object
+      end
     end
 
     def defer_in(number_of_seconds_from_now, identifier, klass, *args)
