@@ -5,14 +5,14 @@ module Deferrer
 
     def run(options = {})
       loop_frequency = options.fetch(:loop_frequency, 0.1)
-      logger         = options.fetch(:logger, nil)
-      before_each    = options.fetch(:before_each, nil)
-      after_each     = options.fetch(:after_each, nil)
       single_run     = options.fetch(:single_run, false)
+      @logger        = options.fetch(:logger, nil)
+      @before_each   = options.fetch(:before_each, nil)
+      @after_each    = options.fetch(:after_each, nil)
 
       loop do
         while item = next_item
-          process_item(item, logger, before_each, after_each)
+          process_item(item)
         end
 
         break if single_run
@@ -67,17 +67,17 @@ module Deferrer
     end
 
     private
-    def process_item(item, logger, before_each, after_each)
-      before_each.call if before_each
+    def process_item(item)
+      @before_each.call if @before_each
       klass = constantize(item['class'])
       args  = item['args']
 
-      logger.info("Executing: #{item['key']}") if logger
+      @logger.info("Executing: #{item['key']}") if @logger
 
       klass.send(:perform, *args)
-      after_each.call if after_each
+      @after_each.call if @after_each
     rescue Exception => e
-      logger.error("Error: #{e.class}: #{e.message}") if logger
+      @logger.error("Error: #{e.class}: #{e.message}") if @logger
     end
 
     def build_item(klass, args)
