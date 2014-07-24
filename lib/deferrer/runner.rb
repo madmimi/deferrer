@@ -46,7 +46,11 @@ module Deferrer
       key  = item_key(identifier)
       item = build_item(klass, args)
 
-      push_item(key, item, timestamp)
+      if Deferrer.inline?
+        process_item(decode(encode(item)))
+      else
+        push_item(key, item, timestamp)
+      end
     end
 
     private

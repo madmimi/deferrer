@@ -41,6 +41,13 @@ describe Deferrer::Runner do
       Deferrer.run(single_run: true)
     end
 
+    it "converts symbols to strings when converting to json and back" do
+      expect(CarDeferrer).to receive(:perform).with({ "a" => "b"})
+
+      Deferrer.defer_in(-1, identifier, CarDeferrer, { a: :b })
+      Deferrer.run(single_run: true)
+    end
+
     it "logs info messages if logger provided" do
       expect(Logger).to receive(:info).with("Executing: deferred:#{identifier}")
       Deferrer.defer_in(-1, identifier, CarDeferrer, car)
@@ -131,6 +138,22 @@ describe Deferrer::Runner do
 
       Timeout::timeout(2) { expect(Deferrer.next_item).to be_nil }
       expect(redis.zrangebyscore(list_key, '-inf', 'inf', :limit => [0, 1]).first).to be_nil
+    end
+  end
+
+  describe "inline" do
+    before :each do
+      Deferrer.inline = true
+    end
+
+    after :each do
+      Deferrer.inline = false
+    end
+
+    it "does performs jobs inline" do
+      expect(CarDeferrer).to receive(:perform).with({ "a" => "b"})
+
+      Deferrer.defer_in(-1, identifier, CarDeferrer, { a: :b })
     end
   end
 end
