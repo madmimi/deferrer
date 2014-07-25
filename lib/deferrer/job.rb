@@ -5,6 +5,7 @@ module Deferrer
     def self.included(base)
       base.send(:include, ::Celluloid)
       base.extend(ClassMethods)
+      Celluloid.logger = Deferrer.logger ? Deferrer.logger : nil
     end
 
     module ClassMethods

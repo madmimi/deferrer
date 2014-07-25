@@ -14,8 +14,8 @@ RSpec.configure do |config|
   end
 
   config.before :each do
-    Celluloid.logger = nil
     Deferrer.redis.flushdb
+    Deferrer.logger = nil
   end
 end
 

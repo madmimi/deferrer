@@ -42,14 +42,16 @@ describe Deferrer::Runner do
 
     it "logs info messages if logger provided" do
       expect(TestLogger).to receive(:info).with("Executing: deferred:#{identifier}")
+      Deferrer.logger = TestLogger
       Deferrer.defer_in(-1, identifier, TestWorker, 'test')
-      Deferrer.run(single_run: true, logger: TestLogger)
+      Deferrer.run(single_run: true)
     end
 
     it "logs error messages if logger provided" do
       expect(TestLogger).to receive(:error).with("Error: RuntimeError: error")
+      Deferrer.logger = TestLogger
       Deferrer.defer_in(-1, identifier, ErrorWorker, 'test')
-      Deferrer.run(single_run: true, logger: TestLogger)
+      Deferrer.run(single_run: true)
     end
 
     it "runs before callback" do

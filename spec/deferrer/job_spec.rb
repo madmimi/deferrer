@@ -15,7 +15,7 @@ end
 
 describe Deferrer::Job do
   it "performs work asynchronously" do
-    total = 10
+    total = 20
     Worker.queue = Queue.new
 
     total.times { |i| Deferrer.defer_in(-1, i, Worker, i) }
