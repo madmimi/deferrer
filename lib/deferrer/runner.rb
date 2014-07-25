@@ -54,25 +54,24 @@ module Deferrer
 
     private
     def process_item(item)
-      @before_each.call if @before_each
       klass = constantize(item['class'])
       args  = item['args']
 
       log(:info, "Executing: #{item['key']}")
 
-      begin
-        if klass.respond_to?(:pool)
-          klass.pool.async.send(:perform, *args)
-        else
-          klass.new.send(:perform, *args)
-        end
-      rescue NoMemoryError, ScriptError, SignalException
-        raise
-      rescue Exception => e
-        log(:error, "Error: #{e.class}: #{e.message}")
+      @before_each.call if @before_each
+
+      if klass.respond_to?(:pool)
+        klass.pool.async.send(:perform, *args)
+      else
+        klass.new.send(:perform, *args)
       end
 
       @after_each.call if @after_each
+    rescue NoMemoryError, ScriptError, SignalException
+      raise
+    rescue Exception => e
+      log(:error, "Error: #{e.class}: #{e.message}")
     end
 
     def build_item(klass, args)
