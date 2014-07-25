@@ -68,10 +68,11 @@ module Deferrer
       end
 
       @after_each.call if @after_each
-    rescue NoMemoryError, ScriptError, SignalException
-      raise
+    rescue StandardError => e
+      log(:error, "Error: #{e.class}: #{e.message}")
     rescue Exception => e
       log(:error, "Error: #{e.class}: #{e.message}")
+      raise
     end
 
     def build_item(klass, args)

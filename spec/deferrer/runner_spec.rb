@@ -40,18 +40,27 @@ describe Deferrer::Runner do
       Deferrer.run(single_run: true)
     end
 
-    it "logs info messages if logger provided" do
+    it "logs info messages" do
       expect(TestLogger).to receive(:info).with("Executing: deferred:#{identifier}")
       Deferrer.logger = TestLogger
       Deferrer.defer_in(-1, identifier, TestWorker, 'test')
       Deferrer.run(single_run: true)
     end
 
-    it "logs error messages if logger provided" do
+    it "rescues standard errors and logs error messages" do
       expect(TestLogger).to receive(:error).with("Error: RuntimeError: error")
       Deferrer.logger = TestLogger
       Deferrer.defer_in(-1, identifier, ErrorWorker, 'test')
       Deferrer.run(single_run: true)
+    end
+
+    it "rescues exceptions and logs and error messages" do
+      expect(TestLogger).to receive(:error).with("Error: Exception: error")
+      allow_any_instance_of(ErrorWorker).to receive(:perform) { raise Exception.new('error') }
+
+      Deferrer.logger = TestLogger
+      Deferrer.defer_in(-1, identifier, ErrorWorker, 'test')
+      expect { Deferrer.run(single_run: true) }.to raise_error
     end
 
     it "runs before callback" do
