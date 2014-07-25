@@ -1,7 +1,5 @@
 require 'deferrer'
-require_relative './name_deferrer'
-
-Deferrer.redis_config = { :host => "localhost", :port => 6379 }
+require_relative './common'
 
 class Logger
   def self.info(message)

@@ -2,15 +2,12 @@ require 'spec_helper'
 require 'timeout'
 
 class CarDeferrer
-  def self.perform(car)
-  end
-
-  def self.callback
+  def perform(car)
   end
 end
 
 class InvalidDeferrer
-  def self.perform(car)
+  def perform(car)
     raise 'error'
   end
 end
@@ -29,20 +26,17 @@ describe Deferrer::Runner do
   let(:identifier) { 'car1' }
   let(:redis) { Deferrer.redis }
   let(:list_key) { Deferrer::LIST_KEY }
-
-  before :each do
-    redis.flushdb
-  end
+  let(:callback) { lambda { } }
 
   describe "run" do
     it "processes jobs" do
-      expect(CarDeferrer).to receive(:perform).with(car)
+      expect_any_instance_of(CarDeferrer).to receive(:perform).with(car)
       Deferrer.defer_in(-1, identifier, CarDeferrer, car)
       Deferrer.run(single_run: true)
     end
 
     it "converts symbols to strings when converting to json and back" do
-      expect(CarDeferrer).to receive(:perform).with({ "a" => "b"})
+      expect_any_instance_of(CarDeferrer).to receive(:perform).with({ "a" => "b"})
 
       Deferrer.defer_in(-1, identifier, CarDeferrer, { a: :b })
       Deferrer.run(single_run: true)
@@ -61,15 +55,15 @@ describe Deferrer::Runner do
     end
 
     it "runs before callback" do
-      expect(CarDeferrer).to receive(:callback)
+      expect(callback).to receive(:call)
       Deferrer.defer_in(-1, identifier, CarDeferrer, car)
-      Deferrer.run(single_run: true, before_each: Proc.new { CarDeferrer.callback })
+      Deferrer.run(single_run: true, before_each: callback)
     end
 
     it "runs after callback" do
-      expect(CarDeferrer).to receive(:callback)
+      expect(callback).to receive(:call)
       Deferrer.defer_in(-1, identifier, CarDeferrer, car)
-      Deferrer.run(single_run: true, after_each: Proc.new { CarDeferrer.callback })
+      Deferrer.run(single_run: true, after_each: callback)
     end
   end
 
@@ -151,7 +145,7 @@ describe Deferrer::Runner do
     end
 
     it "does performs jobs inline" do
-      expect(CarDeferrer).to receive(:perform).with({ "a" => "b"})
+      expect_any_instance_of(CarDeferrer).to receive(:perform).with({ "a" => "b"})
 
       Deferrer.defer_in(-1, identifier, CarDeferrer, { a: :b })
     end
