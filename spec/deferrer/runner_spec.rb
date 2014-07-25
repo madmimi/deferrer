@@ -62,18 +62,6 @@ describe Deferrer::Runner do
       Deferrer.defer_in(-1, identifier, ErrorWorker, 'test')
       expect { Deferrer.run(single_run: true) }.to raise_error
     end
-
-    it "runs before callback" do
-      expect(callback).to receive(:call)
-      Deferrer.defer_in(-1, identifier, TestWorker, 'test')
-      Deferrer.run(single_run: true, before_each: callback)
-    end
-
-    it "runs after callback" do
-      expect(callback).to receive(:call)
-      Deferrer.defer_in(-1, identifier, TestWorker, 'test')
-      Deferrer.run(single_run: true, after_each: callback)
-    end
   end
 
   describe ".defer_at" do

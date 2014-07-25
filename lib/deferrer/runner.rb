@@ -3,8 +3,6 @@ module Deferrer
     def run(options = {})
       loop_frequency = options.fetch(:loop_frequency, 0.1)
       single_run     = options.fetch(:single_run, false)
-      @before_each   = options.fetch(:before_each, nil)
-      @after_each    = options.fetch(:after_each, nil)
 
       loop do
         while item = next_item
@@ -59,15 +57,12 @@ module Deferrer
 
       log(:info, "Executing: #{item['key']}")
 
-      @before_each.call if @before_each
-
       if klass.respond_to?(:pool)
         klass.pool.async.send(:perform, *args)
       else
         klass.new.send(:perform, *args)
       end
 
-      @after_each.call if @after_each
     rescue StandardError => e
       log(:error, "Error: #{e.class}: #{e.message}")
     rescue Exception => e
