@@ -22,7 +22,7 @@ describe Deferrer::Job do
 
     Deferrer.run(single_run: true)
 
-    expect(total.times.map { Worker.queue.pop }).to eq(total.times.to_a)
+    expect(total.times.map { Worker.queue.pop }.sort).to eq(total.times.to_a)
   end
 
   it "responds to pool when Deferrer::Job included" do
