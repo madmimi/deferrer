@@ -67,6 +67,8 @@ module Deferrer
         else
           klass.new.send(:perform, *args)
         end
+      rescue NoMemoryError, ScriptError, SignalException
+        raise
       rescue Exception => e
         @logger.error("Error: #{e.class}: #{e.message}") if @logger
       end
