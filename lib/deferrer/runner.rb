@@ -65,6 +65,7 @@ module Deferrer
       log(:info, "Executing: #{klass}#perform with args: #{args}")
 
       if async
+        raise WorkerNotImplemented unless klass.included_modules.include?(Deferrer::Job)
         klass.pool.async.send(:perform, *args)
       else
         klass.new.send(:perform, *args)

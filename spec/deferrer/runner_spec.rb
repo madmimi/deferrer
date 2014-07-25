@@ -30,6 +30,14 @@ describe Deferrer::Runner do
 
       expect { run_sync(Worker) { Deferrer.defer_in(-1, identifier, Worker, 'test') } }.to raise_error
     end
+
+    it "raises error if worker class does not include Deferrer::Job" do
+      expect {
+        run_sync(WorkerWithoutDeferrerJob) {
+          Deferrer.defer_in(-1, identifier, WorkerWithoutDeferrerJob, 'test')
+        }
+      }.to raise_error(Deferrer::WorkerNotImplemented)
+    end
   end
 
   describe ".next_item" do

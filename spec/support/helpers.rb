@@ -12,10 +12,7 @@ module Helpers
   end
 end
 
-class Worker
-  include Deferrer::Job
-  pool_options size: 3
-
+class WorkerWithoutDeferrerJob
   class << self
     attr_accessor :queue
   end
@@ -25,3 +22,9 @@ class Worker
     self.class.queue.push(i)
   end
 end
+
+class Worker < WorkerWithoutDeferrerJob
+  include Deferrer::Job
+  pool_options size: 3
+end
+
