@@ -9,6 +9,7 @@ class Worker
   end
 
   def perform(i)
+    Thread.current[:x] = i
     self.class.queue.push(i)
   end
 end
@@ -23,6 +24,17 @@ describe Deferrer::Job do
     Deferrer.run(single_run: true)
 
     expect(total.times.map { Worker.queue.pop }.sort).to eq(total.times.to_a)
+  end
+
+  it "is thread safe" do
+    Worker.queue = Queue.new
+
+    Deferrer.defer_in(-1, 'id', Worker, 1)
+    Deferrer.run(single_run: true)
+
+    Worker.queue.pop
+
+    expect(Thread.current[:x]).to be_nil
   end
 
   it "responds to pool when Deferrer::Job included" do
