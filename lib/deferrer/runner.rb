@@ -1,15 +1,11 @@
 module Deferrer
   module Runner
-
-    attr_reader :pools
-
     def run(options = {})
       loop_frequency = options.fetch(:loop_frequency, 0.1)
       single_run     = options.fetch(:single_run, false)
       @logger        = options.fetch(:logger, nil)
       @before_each   = options.fetch(:before_each, nil)
       @after_each    = options.fetch(:after_each, nil)
-      @pools         = {}
 
       loop do
         while item = next_item
@@ -60,16 +56,14 @@ module Deferrer
     private
     def process_item(item)
       @before_each.call if @before_each
-      klass_name = item['class']
-      args       = item['args']
-      klass      = constantize(klass_name)
+      klass = constantize(item['class'])
+      args  = item['args']
 
       @logger.info("Executing: #{item['key']}") if @logger
 
       begin
-        if klass.included_modules.include?(Deferrer::Job)
-          pool = pools[klass_name] ||= klass.pool
-          pool.async.send(:perform, *args)
+        if klass.respond_to?(:pool)
+          klass.pool.async.send(:perform, *args)
         else
           klass.new.send(:perform, *args)
         end

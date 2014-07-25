@@ -2,7 +2,7 @@ require 'spec_helper'
 
 class Worker
   include Deferrer::Job
-  pool_options size: 2
+  pool_options size: 3
 
   class << self
     attr_accessor :queue
@@ -23,5 +23,17 @@ describe Deferrer::Job do
     Deferrer.run(single_run: true)
 
     expect(total.times.map { Worker.queue.pop }).to eq(total.times.to_a)
+  end
+
+  it "responds to pool when Deferrer::Job included" do
+    expect(Worker).to respond_to(:pool)
+  end
+
+  it "sets the Deferrer::Job pool size to 3" do
+    expect(Worker.pool.size).to eq(3)
+  end
+
+  it "returns the same pool" do
+    expect(Worker.pool).to eq(Worker.pool)
   end
 end

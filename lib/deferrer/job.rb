@@ -15,6 +15,10 @@ module Deferrer
           @pool_options
         end
       end
+
+      def pool
+        @pool ||= super(pool_options)
+      end
     end
   end
 end
