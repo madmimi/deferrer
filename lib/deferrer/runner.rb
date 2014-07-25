@@ -62,7 +62,7 @@ module Deferrer
       klass = constantize(item['class'])
       args  = item['args']
 
-      log(:info, "Executing: #{klass}#perform with args: #{args}")
+      log(:info, "Executing #{klass}#perform with args: #{args}")
 
       if async
         raise WorkerNotImplemented unless klass.included_modules.include?(Deferrer::Job)

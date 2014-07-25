@@ -10,7 +10,7 @@ RSpec.configure do |config|
   config.include Helpers
 
   config.before :suite do
-    Deferrer.redis_config = { :host => "localhost", :port => 6379, :db => 15 }
+    Deferrer.redis_config = { :host => "localhost", :port => 6379, :db => 14 }
   end
 
   config.before :each do

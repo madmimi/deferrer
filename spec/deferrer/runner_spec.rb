@@ -110,7 +110,7 @@ describe Deferrer::Runner do
 
   describe ".logger" do
     it "logs info messages" do
-      expect(logger).to receive(:info).with(%{Executing: Worker#perform with args: ["test"]})
+      expect(logger).to receive(:info).with(%{Executing Worker#perform with args: ["test"]})
 
       Deferrer.logger = logger
       run_sync(Worker) { Deferrer.defer_in(-1, identifier, Worker, 'test') }

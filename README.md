@@ -35,10 +35,12 @@ Deferrer.logger = Logger.new(STDOUT)
 ```
 
 
-Define deferrer class (must have perform instance method)
+Define deferrer class (must include Deferrer::Job and have perform instance method)
 
 ```ruby
-class WorkDeferrer
+class Worker
+  include Deferrer::Job
+
   def perform(update)
     puts update
   end
@@ -60,16 +62,16 @@ Deferrer.run(options = {})
 Defer some executions
 
 ```ruby
-Deferrer.defer_in(5, 'identifier', WorkDeferrer, 'update 1')
-Deferrer.defer_in(6, 'identifier', WorkDeferrer, 'update 2')
-Deferrer.defer_in(9, 'identifier', WorkDeferrer, 'update 3')
+Deferrer.defer_in(5, 'identifier', Worker, 'update 1')
+Deferrer.defer_in(6, 'identifier', Worker, 'update 2')
+Deferrer.defer_in(9, 'identifier', Worker, 'update 3')
 ```
 
 
 It will stack all defered executions per identifier until first timeout expires (5 seconds) and then it will only execute the last update for the expired identifier:
 
 ```ruby
-WorkDeferrer.new.perform('update 3')
+Worker.new.perform('update 3')
 ```
 
 
