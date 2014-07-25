@@ -4,7 +4,7 @@ require 'logger'
 LOGGER = Logger.new(STDOUT)
 
 # Setup redis
-Deferrer.redis_config = { :host => "localhost", :port => 6379 }
+Deferrer.redis_config = { :host => "localhost", :port => 6379, :db => 15 }
 Deferrer.logger = LOGGER
 
 # Define deferrer worker
