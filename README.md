@@ -2,8 +2,7 @@
 
 # Deferrer
 
-Defer executions and run only the last update at the scheduled time
-
+Deferrer is a library for deferring work units for a time period or to a specific time. When time reaches, only the last work unit will be run. Usually, the last work unit should be the one that summarizes all the previous ones. An example scenario would be when you want to send live updates to recipient, and if those updates happen *very* frequently, you would like to limit how often these updates are sent.
 
 ## Installation
 
