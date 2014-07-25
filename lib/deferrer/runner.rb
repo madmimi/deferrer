@@ -1,15 +1,21 @@
 module Deferrer
   module Runner
+
     def run(options = {})
       loop_frequency = options.fetch(:loop_frequency, 0.1)
       single_run     = options.fetch(:single_run, false)
-      @logger        = options.fetch(:logger, nil)
-      @before_each   = options.fetch(:before_each, nil)
-      @after_each    = options.fetch(:after_each, nil)
 
       loop do
-        while item = next_item
-          process_item(item)
+        begin
+          while item = next_item
+            process_item(item)
+          end
+
+        rescue StandardError => e
+          log(:error, "Error: #{e.class}: #{e.message}")
+        rescue Exception => e
+          log(:error, "Error: #{e.class}: #{e.message}")
+          raise
         end
 
         break if single_run
@@ -28,7 +34,6 @@ module Deferrer
         item = redis.rpop(key)
         if item
           decoded_item = decode(item)
-          decoded_item['key'] = key
         end
 
         remove(key)
@@ -47,29 +52,27 @@ module Deferrer
       item = build_item(klass, args)
 
       if Deferrer.inline?
-        process_item(decode(encode(item)))
+        process_item(decode(encode(item)), false)
       else
         push_item(key, item, timestamp)
       end
     end
 
-    private
-    def process_item(item)
-      @before_each.call if @before_each
+    def process_item(item, async = true)
       klass = constantize(item['class'])
       args  = item['args']
 
-      @logger.info("Executing: #{item['key']}") if @logger
+      log(:info, "Executing #{klass}#perform with args: #{args}")
 
-      begin
+      if async
+        raise WorkerNotImplemented unless klass.included_modules.include?(Deferrer::Job)
+        klass.pool.async.send(:perform, *args)
+      else
         klass.new.send(:perform, *args)
-      rescue Exception => e
-        @logger.error("Error: #{e.class}: #{e.message}") if @logger
       end
-
-      @after_each.call if @after_each
     end
 
+    private
     def build_item(klass, args)
       {'class' => klass.to_s, 'args' => args}
     end
@@ -106,6 +109,10 @@ module Deferrer
         object = object.const_get(name)
         object
       end
+    end
+
+    def log(type, message)
+      logger.send(type, message) if logger
     end
   end
 end

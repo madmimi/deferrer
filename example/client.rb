@@ -1,6 +1,7 @@
-require 'deferrer'
 require_relative './common'
 
-3.times do |i|
-  Deferrer.defer_in(i + 3, 'identifier', NameDeferrer, 'User', '1')
+10.times do |i|
+  Deferrer.defer_in(2, i, Worker, 'update 1')
+  Deferrer.defer_in(2, i, Worker, 'update 2')
+  Deferrer.defer_in(2, i, Worker, 'update 3')
 end

@@ -13,4 +13,10 @@ module Deferrer
   extend Configuration
   extend JsonEncoding
   extend Runner
+
+  class WorkerNotImplemented < NotImplementedError
+    def initialize
+      super("Deferrer Worker must include Deferrer::Job module")
+    end
+  end
 end

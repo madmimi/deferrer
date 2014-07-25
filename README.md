@@ -31,13 +31,16 @@ Configure redis
 
 ```ruby
 Deferrer.redis_config = { :host => "localhost", :port => 6379 }
+Deferrer.logger = Logger.new(STDOUT)
 ```
 
 
-Define deferrer class (must have perform instance method)
+Define deferrer class (must include Deferrer::Job and have perform instance method)
 
 ```ruby
-class WorkDeferrer
+class Worker
+  include Deferrer::Job
+
   def perform(update)
     puts update
   end
@@ -52,9 +55,6 @@ Deferrer.run(options = {})
 
 # Following `options` are available:
 #   loop_frequency - sleep between loops, default to 0.1 seconds
-#   logger         - logging mechanism, needs to respond to `info` and `error`
-#   before_each    - callback to run before processing an item, needs to respond to `call`
-#   after_each     - callback to run after processing an item, needs to respond to `call`
 #   single_run     - process items only for a single loop, useful for testing
 ```
 
@@ -62,16 +62,16 @@ Deferrer.run(options = {})
 Defer some executions
 
 ```ruby
-Deferrer.defer_in(5, 'identifier', WorkDeferrer, 'update 1')
-Deferrer.defer_in(6, 'identifier', WorkDeferrer, 'update 2')
-Deferrer.defer_in(9, 'identifier', WorkDeferrer, 'update 3')
+Deferrer.defer_in(5, 'identifier', Worker, 'update 1')
+Deferrer.defer_in(6, 'identifier', Worker, 'update 2')
+Deferrer.defer_in(9, 'identifier', Worker, 'update 3')
 ```
 
 
 It will stack all defered executions per identifier until first timeout expires (5 seconds) and then it will only execute the last update for the expired identifier:
 
 ```ruby
-WorkDeferrer.new.perform('update 3')
+Worker.new.perform('update 3')
 ```
 
 
