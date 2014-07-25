@@ -1,40 +1,20 @@
 require 'spec_helper'
 
-class Worker
-  include Deferrer::Job
-  pool_options size: 3
-
-  class << self
-    attr_accessor :queue
-  end
-
-  def perform(i)
-    Thread.current[:x] = i
-    self.class.queue.push(i)
-  end
-end
-
 describe Deferrer::Job do
   it "performs work asynchronously" do
     total = 20
-    Worker.queue = Queue.new
 
-    total.times { |i| Deferrer.defer_in(-1, i, Worker, i) }
-
-    Deferrer.run(single_run: true)
+    run_sync(Worker, total) { |i| Deferrer.defer_in(-1, i, Worker, i) }
 
     expect(total.times.map { Worker.queue.pop }.sort).to eq(total.times.to_a)
   end
 
   it "is thread safe" do
-    Worker.queue = Queue.new
+    Thread.current[:x] = 1
 
-    Deferrer.defer_in(-1, 'id', Worker, 1)
-    Deferrer.run(single_run: true)
+    run_sync(Worker) { Deferrer.defer_in(-1, 'id', Worker, 1) }
 
-    Worker.queue.pop
-
-    expect(Thread.current[:x]).to be_nil
+    expect(Thread.current[:x]).to eq(1)
   end
 
   it "responds to pool when Deferrer::Job included" do

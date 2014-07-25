@@ -1,12 +1,21 @@
 module Deferrer
   module Runner
+
     def run(options = {})
       loop_frequency = options.fetch(:loop_frequency, 0.1)
       single_run     = options.fetch(:single_run, false)
 
       loop do
-        while item = next_item
-          process_item(item)
+        begin
+          while item = next_item
+            process_item(item)
+          end
+
+        rescue StandardError => e
+          log(:error, "Error: #{e.class}: #{e.message}")
+        rescue Exception => e
+          log(:error, "Error: #{e.class}: #{e.message}")
+          raise
         end
 
         break if single_run
@@ -25,7 +34,6 @@ module Deferrer
         item = redis.rpop(key)
         if item
           decoded_item = decode(item)
-          decoded_item['key'] = key
         end
 
         remove(key)
@@ -44,32 +52,26 @@ module Deferrer
       item = build_item(klass, args)
 
       if Deferrer.inline?
-        process_item(decode(encode(item)))
+        process_item(decode(encode(item)), false)
       else
         push_item(key, item, timestamp)
       end
     end
 
-    private
-    def process_item(item)
+    def process_item(item, async = true)
       klass = constantize(item['class'])
       args  = item['args']
 
-      log(:info, "Executing: #{item['key']}")
+      log(:info, "Executing: #{klass}#perform with args: #{args}")
 
-      if klass.respond_to?(:pool)
+      if async
         klass.pool.async.send(:perform, *args)
       else
         klass.new.send(:perform, *args)
       end
-
-    rescue StandardError => e
-      log(:error, "Error: #{e.class}: #{e.message}")
-    rescue Exception => e
-      log(:error, "Error: #{e.class}: #{e.message}")
-      raise
     end
 
+    private
     def build_item(klass, args)
       {'class' => klass.to_s, 'args' => args}
     end
