@@ -2,7 +2,7 @@
 
 # Deferrer
 
-Deferrer is a library for deferring work units for a time period or to a specific time. When time reaches, only the last work unit will be run. Usually, the last work unit should be the one that summarizes all the previous ones. An example scenario would be when you want to send live updates to recipient, and if those updates happen *very* frequently, you would like to limit how often these updates are sent.
+Deferrer is a library for deferring work units for a time period or to a specific time. When time reaches, only the last work unit will be processed. Usually, the last work unit should be the one that summarizes all the previous ones. An example scenario would be sending live updates that happen *very* frequently and we want to limit them by sending an update every x seconds.
 
 ## Installation
 
@@ -27,7 +27,7 @@ $ gem install deferrer
 
 ## Usage
 
-Configure redis
+Configure deferrer (redis connection, logger)
 
 ```ruby
 Deferrer.redis_config = { :host => "localhost", :port => 6379 }
@@ -35,13 +35,16 @@ Deferrer.logger = Logger.new(STDOUT)
 ```
 
 
-Define deferrer worker (must respond to call method)
+Define deferrer worker that must respond to call method
 
 ```ruby
-Deferrer.worker = lambda do |*args|
+Deferrer.worker = lambda do |klass, *args|
   # do some work
+  # klass.constantize.new.perform(*args)
 end
 ```
+
+Deferrer is usually used in combination with background processing tools like sidekiq and resque. If that's the case, Deferrer.worker can be light-weight and responsible only for pushing work to a background job.
 
 
 Start a worker process.
@@ -55,7 +58,7 @@ Deferrer.run(options = {})
 ```
 
 
-Defer some executions
+Defer some executions:
 
 ```ruby
 Deferrer.defer_in(5, 'identifier', Worker, 'update 1')
