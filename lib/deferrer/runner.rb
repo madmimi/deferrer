@@ -5,8 +5,15 @@ module Deferrer
       single_run     = options.fetch(:single_run, false)
 
       loop do
-        while item = next_item
-          process_item(item)
+        begin
+          while item = next_item
+            process_item(item)
+          end
+        rescue StandardError => e
+          log(:error, "Error: #{e.class}: #{e.message}")
+        rescue Exception => e
+          log(:error, "Error: #{e.class}: #{e.message}")
+          raise
         end
 
         break if single_run
@@ -52,12 +59,7 @@ module Deferrer
       args  = item['args']
 
       log(:info, "Executing: #{item['key']}")
-
-      begin
-        klass.new.send(:perform, *args)
-      rescue Exception => e
-        log(:error, "Error: #{e.class}: #{e.message}")
-      end
+      klass.new.send(:perform, *args)
     end
 
     def build_item(klass, args)
