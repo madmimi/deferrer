@@ -55,6 +55,7 @@ Deferrer.run(options = {})
 # Following `options` are available:
 #   loop_frequency - sleep between loops, default to 0.1 seconds
 #   single_run     - process items only for a single loop, useful for testing
+#   ignore_time    - don't wait for time period to expire, useful for testing
 ```
 
 
@@ -71,6 +72,15 @@ It will stack all defered executions per identifier until first timeout expires 
 
 ```ruby
 Deferrer.worker.call('Worker', 'update 3')
+```
+
+
+## Testing
+
+For testing, two options of the `run` method are useful. `single_run` will run the loop only once and `ignore_time` will not wait for time period to expire but execute to job now.
+
+```ruby
+Deferrer.run(single_run: true, ignore_time: true)
 ```
 
 
