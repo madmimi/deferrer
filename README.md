@@ -75,15 +75,6 @@ WorkDeferrer.new.perform('update 3')
 ```
 
 
-## Testing
-
-For testing, you can switch to inline mode and executions will not be deferred, but performed inline.
-
-```ruby
-Deferrer.inline = true
-```
-
-
 ## Contributing
 
 1. Fork it

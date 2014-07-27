@@ -132,20 +132,4 @@ describe Deferrer::Runner do
       expect(redis.zrangebyscore(list_key, '-inf', 'inf', :limit => [0, 1]).first).to be_nil
     end
   end
-
-  describe "inline" do
-    before :each do
-      Deferrer.inline = true
-    end
-
-    after :each do
-      Deferrer.inline = false
-    end
-
-    it "does performs jobs inline" do
-      expect_any_instance_of(TestWorker).to receive(:perform).with({ "a" => "b"})
-
-      Deferrer.defer_in(-1, identifier, TestWorker, { a: :b })
-    end
-  end
 end
