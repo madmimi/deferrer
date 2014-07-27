@@ -55,11 +55,8 @@ module Deferrer
 
     private
     def process_item(item)
-      klass = constantize(item['class'])
-      args  = item['args']
-
-      log(:info, "Executing: #{item['key']}")
-      klass.new.send(:perform, *args)
+      log(:info, "Processing: #{item['key']}")
+      worker.call(item['class'], *item['args'])
     end
 
     def build_item(klass, args)
@@ -91,13 +88,6 @@ module Deferrer
         redis.zrem(LIST_KEY, key)
       end
       redis.unwatch
-    end
-
-    def constantize(klass_string)
-      klass_string.split('::').inject(Object) do |object, name|
-        object = object.const_get(name)
-        object
-      end
     end
 
     def log(type, message)
