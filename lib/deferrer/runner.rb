@@ -3,8 +3,6 @@ module Deferrer
     def run(options = {})
       loop_frequency = options.fetch(:loop_frequency, 0.1)
       single_run     = options.fetch(:single_run, false)
-      @before_each   = options.fetch(:before_each, nil)
-      @after_each    = options.fetch(:after_each, nil)
 
       loop do
         while item = next_item
@@ -50,7 +48,6 @@ module Deferrer
 
     private
     def process_item(item)
-      @before_each.call if @before_each
       klass = constantize(item['class'])
       args  = item['args']
 
@@ -61,8 +58,6 @@ module Deferrer
       rescue Exception => e
         log(:error, "Error: #{e.class}: #{e.message}")
       end
-
-      @after_each.call if @after_each
     end
 
     def build_item(klass, args)

@@ -53,8 +53,6 @@ Deferrer.run(options = {})
 
 # Following `options` are available:
 #   loop_frequency - sleep between loops, default to 0.1 seconds
-#   before_each    - callback to run before processing an item, needs to respond to `call`
-#   after_each     - callback to run after processing an item, needs to respond to `call`
 #   single_run     - process items only for a single loop, useful for testing
 ```
 
