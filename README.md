@@ -35,18 +35,16 @@ Deferrer.logger = Logger.new(STDOUT)
 ```
 
 
-Define deferrer class (must have perform instance method)
+Define deferrer worker (must respond to call method)
 
 ```ruby
-class WorkDeferrer
-  def perform(update)
-    puts update
-  end
+Deferrer.worker = lambda do |*args|
+  # do some work
 end
 ```
 
 
-Start a worker process. It needs to have redis configured and access to deferrer classes.
+Start a worker process.
 
 ```ruby
 Deferrer.run(options = {})
@@ -60,16 +58,16 @@ Deferrer.run(options = {})
 Defer some executions
 
 ```ruby
-Deferrer.defer_in(5, 'identifier', WorkDeferrer, 'update 1')
-Deferrer.defer_in(6, 'identifier', WorkDeferrer, 'update 2')
-Deferrer.defer_in(9, 'identifier', WorkDeferrer, 'update 3')
+Deferrer.defer_in(5, 'identifier', Worker, 'update 1')
+Deferrer.defer_in(6, 'identifier', Worker, 'update 2')
+Deferrer.defer_in(9, 'identifier', Worker, 'update 3')
 ```
 
 
-It will stack all defered executions per identifier until first timeout expires (5 seconds) and then it will only execute the last update for the expired identifier:
+It will stack all defered executions per identifier until first timeout expires (5 seconds) and then it will only execute the last update for the expired identifier, calling the deferrer worker:
 
 ```ruby
-WorkDeferrer.new.perform('update 3')
+Deferrer.worker.call('Worker', 'update 3')
 ```
 
 

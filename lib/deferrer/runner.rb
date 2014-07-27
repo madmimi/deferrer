@@ -4,6 +4,8 @@ module Deferrer
       loop_frequency = options.fetch(:loop_frequency, 0.1)
       single_run     = options.fetch(:single_run, false)
 
+      raise WorkerNotConfigured unless worker
+
       loop do
         begin
           while item = next_item
@@ -41,14 +43,14 @@ module Deferrer
       decoded_item
     end
 
-    def defer_in(number_of_seconds_from_now, identifier, klass, *args)
+    def defer_in(number_of_seconds_from_now, identifier, *args)
       timestamp = Time.now + number_of_seconds_from_now
-      defer_at(timestamp, identifier, klass, *args)
+      defer_at(timestamp, identifier, *args)
     end
 
-    def defer_at(timestamp, identifier, klass, *args)
+    def defer_at(timestamp, identifier, *args)
       key  = item_key(identifier)
-      item = build_item(klass, args)
+      item = { 'args' => args }
 
       push_item(key, item, timestamp)
     end
@@ -56,11 +58,7 @@ module Deferrer
     private
     def process_item(item)
       log(:info, "Processing: #{item['key']}")
-      worker.call(item['class'], *item['args'])
-    end
-
-    def build_item(klass, args)
-      {'class' => klass.to_s, 'args' => args}
+      worker.call(*item['args'])
     end
 
     def item_key(identifier)

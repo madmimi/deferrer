@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'timeout'
 require 'logger'
 
 describe Deferrer::Runner do
@@ -30,42 +29,20 @@ describe Deferrer::Runner do
       Deferrer.run(single_run: true)
     end
 
-    it "rescues exceptions and logs and error messages" do
+    it "rescues exceptions and logs error messages" do
       expect(logger).to receive(:error).with("Error: Exception: error")
       allow(Deferrer).to receive(:next_item) { raise Exception.new('error') }
 
       Deferrer.logger = logger
       Deferrer.defer_in(-1, identifier, 'TestWorker', 'test')
-      expect { Deferrer.run(single_run: true) }.to raise_error
-    end
-  end
-
-  describe "logger" do
-    before :each do
-      Deferrer.logger = logger
+      expect { Deferrer.run(single_run: true) }.to raise_error(Exception)
     end
 
-    it "logs info messages" do
-      expect(logger).to receive(:info).with("Processing: deferred:#{identifier}")
-
+    it "raises error if worker not configured" do
+      Deferrer.worker = nil
       Deferrer.defer_in(-1, identifier, 'TestWorker', 'test')
-      Deferrer.run(single_run: true)
-    end
 
-    it "logs error messages" do
-      expect(logger).to receive(:error).with("Error: RuntimeError: error")
-      allow(Deferrer).to receive(:next_item) { raise RuntimeError.new('error') }
-
-      Deferrer.defer_in(-1, identifier, 'TestWorker', 'test')
-      Deferrer.run(single_run: true)
-    end
-
-    it "logs error messages on exceptions" do
-      expect(logger).to receive(:error).with("Error: Exception: error")
-      allow(Deferrer).to receive(:next_item) { raise Exception.new('error') }
-
-      Deferrer.defer_in(-1, identifier, 'TestWorker', 'test')
-      expect { Deferrer.run(single_run: true) }.to raise_error
+      expect { Deferrer.run(single_run: true) }.to raise_error(Deferrer::WorkerNotConfigured)
     end
   end
 
@@ -93,25 +70,16 @@ describe Deferrer::Runner do
 
       item = Deferrer.next_item
 
-      expect(item['class']).to eq('TestWorker')
-      expect(item['args']).to eq(['test'])
+      expect(item['args']).to eq(['TestWorker', 'test'])
     end
 
     it "returns last update of an item" do
-      Deferrer.defer_at(Time.now - 3, identifier, 'TestWorker', 'test1')
-      Deferrer.defer_at(Time.now - 2, identifier, 'TestWorker', 'test2')
+      Deferrer.defer_at(Time.now - 3, identifier, 'TestWorker', 'update1')
+      Deferrer.defer_at(Time.now - 2, identifier, 'TestWorker', 'update2')
 
       item = Deferrer.next_item
 
-      expect(item['class']).to eq('TestWorker')
-      expect(item['args']).to eq(['test2'])
-    end
-
-    it "keep the old score value" do
-      Deferrer.defer_at(Time.now - 3, identifier, 'TestWorker', 'test1')
-      Deferrer.defer_at(Time.now + 1, identifier, 'TestWorker', 'test2')
-
-      expect(Deferrer.next_item).not_to be_nil
+      expect(item['args']).to eq(['TestWorker', 'update2'])
     end
 
     it "returns nil when no next item" do
@@ -132,8 +100,37 @@ describe Deferrer::Runner do
       Deferrer.defer_in(-1, identifier, 'TestWorker', 'test')
       redis.del(item_key(identifier))
 
-      Timeout::timeout(2) { expect(Deferrer.next_item).to be_nil }
+      expect(Deferrer.next_item).to be_nil
       expect(redis.zrangebyscore(list_key, '-inf', 'inf', :limit => [0, 1]).first).to be_nil
+    end
+  end
+
+  describe ".logger" do
+    before :each do
+      Deferrer.logger = logger
+    end
+
+    it "logs info messages" do
+      expect(logger).to receive(:info).with("Processing: deferred:#{identifier}")
+
+      Deferrer.defer_in(-1, identifier, 'TestWorker', 'test')
+      Deferrer.run(single_run: true)
+    end
+
+    it "logs error messages" do
+      expect(logger).to receive(:error).with("Error: RuntimeError: error")
+      allow(Deferrer).to receive(:next_item) { raise RuntimeError.new('error') }
+
+      Deferrer.defer_in(-1, identifier, 'TestWorker', 'test')
+      Deferrer.run(single_run: true)
+    end
+
+    it "logs error messages on exceptions" do
+      expect(logger).to receive(:error).with("Error: Exception: error")
+      allow(Deferrer).to receive(:next_item) { raise Exception.new('error') }
+
+      Deferrer.defer_in(-1, identifier, 'TestWorker', 'test')
+      expect { Deferrer.run(single_run: true) }.to raise_error
     end
   end
 end
