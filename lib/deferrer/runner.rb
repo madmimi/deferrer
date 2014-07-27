@@ -3,6 +3,7 @@ module Deferrer
     def run(options = {})
       loop_frequency = options.fetch(:loop_frequency, 0.1)
       single_run     = options.fetch(:single_run, false)
+      @ignore_time   = options.fetch(:ignore_time, false)
 
       raise WorkerNotConfigured unless worker
 
@@ -24,11 +25,9 @@ module Deferrer
     end
 
     def next_item
-      item = nil
+      item         = nil
       decoded_item = nil
-      score = calculate_score(Time.now)
-
-      key = redis.zrangebyscore(LIST_KEY, '-inf', score, :limit => [0, 1]).first
+      key          = next_key
 
       if key
         item = redis.rpop(key)
@@ -72,6 +71,15 @@ module Deferrer
       if count == 1
         score = calculate_score(timestamp)
         redis.zadd(LIST_KEY, score, key)
+      end
+    end
+
+    def next_key
+      if @ignore_time
+        redis.zrange(LIST_KEY, 0, 1).first
+      else
+        score = calculate_score(Time.now)
+        redis.zrangebyscore(LIST_KEY, '-inf', score, :limit => [0, 1]).first
       end
     end
 
