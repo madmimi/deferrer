@@ -40,7 +40,7 @@ Define deferrer worker that must respond to call method
 ```ruby
 Deferrer.worker = lambda do |klass, *args|
   # do some work
-  # klass.constantize.new.perform(*args)
+  # Resque.enqueue(klass, *args)
 end
 ```
 
