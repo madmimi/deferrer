@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'timeout'
+require 'logger'
 
 class TestWorker
   def perform(test)
@@ -12,19 +13,12 @@ class ErrorWorker
   end
 end
 
-class TestLogger
-  def self.info(message)
-  end
-
-  def self.error(message)
-  end
-end
-
 describe Deferrer::Runner do
   let(:identifier) { 'some_identifier' }
   let(:redis) { Deferrer.redis }
   let(:list_key) { Deferrer::LIST_KEY }
   let(:callback) { lambda { } }
+  let(:logger) { Logger.new(STDOUT) }
 
   describe "run" do
     it "processes jobs" do
@@ -41,15 +35,17 @@ describe Deferrer::Runner do
     end
 
     it "logs info messages if logger provided" do
-      expect(TestLogger).to receive(:info).with("Executing: deferred:#{identifier}")
+      expect(logger).to receive(:info).with("Executing: deferred:#{identifier}")
+      Deferrer.logger = logger
       Deferrer.defer_in(-1, identifier, TestWorker, 'test')
-      Deferrer.run(single_run: true, logger: TestLogger)
+      Deferrer.run(single_run: true)
     end
 
     it "logs error messages if logger provided" do
-      expect(TestLogger).to receive(:error).with("Error: RuntimeError: error")
+      expect(logger).to receive(:error).with("Error: RuntimeError: error")
+      Deferrer.logger = logger
       Deferrer.defer_in(-1, identifier, ErrorWorker, 'test')
-      Deferrer.run(single_run: true, logger: TestLogger)
+      Deferrer.run(single_run: true)
     end
 
     it "runs before callback" do
