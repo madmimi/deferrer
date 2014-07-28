@@ -3,13 +3,20 @@ module Deferrer
     def run(options = {})
       loop_frequency = options.fetch(:loop_frequency, 0.1)
       single_run     = options.fetch(:single_run, false)
-      @logger        = options.fetch(:logger, nil)
-      @before_each   = options.fetch(:before_each, nil)
-      @after_each    = options.fetch(:after_each, nil)
+      @ignore_time   = options.fetch(:ignore_time, false)
+
+      raise WorkerNotConfigured unless worker
 
       loop do
-        while item = next_item
-          process_item(item)
+        begin
+          while item = next_item
+            process_item(item)
+          end
+        rescue StandardError => e
+          log(:error, "Error: #{e.class}: #{e.message}")
+        rescue Exception => e
+          log(:error, "Error: #{e.class}: #{e.message}")
+          raise
         end
 
         break if single_run
@@ -18,11 +25,9 @@ module Deferrer
     end
 
     def next_item
-      item = nil
+      item         = nil
       decoded_item = nil
-      score = calculate_score(Time.now)
-
-      key = redis.zrangebyscore(LIST_KEY, '-inf', score, :limit => [0, 1]).first
+      key          = next_key
 
       if key
         item = redis.rpop(key)
@@ -37,41 +42,22 @@ module Deferrer
       decoded_item
     end
 
-    def defer_in(number_of_seconds_from_now, identifier, klass, *args)
+    def defer_in(number_of_seconds_from_now, identifier, *args)
       timestamp = Time.now + number_of_seconds_from_now
-      defer_at(timestamp, identifier, klass, *args)
+      defer_at(timestamp, identifier, *args)
     end
 
-    def defer_at(timestamp, identifier, klass, *args)
+    def defer_at(timestamp, identifier, *args)
       key  = item_key(identifier)
-      item = build_item(klass, args)
+      item = { 'args' => args }
 
-      if Deferrer.inline?
-        process_item(decode(encode(item)))
-      else
-        push_item(key, item, timestamp)
-      end
+      push_item(key, item, timestamp)
     end
 
     private
     def process_item(item)
-      @before_each.call if @before_each
-      klass = constantize(item['class'])
-      args  = item['args']
-
-      @logger.info("Executing: #{item['key']}") if @logger
-
-      begin
-        klass.new.send(:perform, *args)
-      rescue Exception => e
-        @logger.error("Error: #{e.class}: #{e.message}") if @logger
-      end
-
-      @after_each.call if @after_each
-    end
-
-    def build_item(klass, args)
-      {'class' => klass.to_s, 'args' => args}
+      log(:info, "Processing: #{item['key']}")
+      worker.call(*item['args'])
     end
 
     def item_key(identifier)
@@ -88,6 +74,15 @@ module Deferrer
       end
     end
 
+    def next_key
+      if @ignore_time
+        redis.zrange(LIST_KEY, 0, 1).first
+      else
+        score = calculate_score(Time.now)
+        redis.zrangebyscore(LIST_KEY, '-inf', score, :limit => [0, 1]).first
+      end
+    end
+
     def calculate_score(timestamp)
       timestamp.to_f
     end
@@ -101,11 +96,8 @@ module Deferrer
       redis.unwatch
     end
 
-    def constantize(klass_string)
-      klass_string.split('::').inject(Object) do |object, name|
-        object = object.const_get(name)
-        object
-      end
+    def log(type, message)
+      logger.send(type, message) if logger
     end
   end
 end

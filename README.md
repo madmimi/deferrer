@@ -2,7 +2,7 @@
 
 # Deferrer
 
-Deferrer is a library for deferring work units for a time period or to a specific time. When time reaches, only the last work unit will be run. Usually, the last work unit should be the one that summarizes all the previous ones. An example scenario would be when you want to send live updates to recipient, and if those updates happen *very* frequently, you would like to limit how often these updates are sent.
+Deferrer is a library for deferring work units for a time period or to a specific time. When time reaches, only the last work unit will be processed. Usually, the last work unit should be the one that summarizes all the previous ones. An example scenario would be sending live updates that happen *very* frequently and we want to limit them by sending an update every x seconds.
 
 ## Installation
 
@@ -27,60 +27,60 @@ $ gem install deferrer
 
 ## Usage
 
-Configure redis
+Configure deferrer (redis connection, logger)
 
 ```ruby
 Deferrer.redis_config = { :host => "localhost", :port => 6379 }
+Deferrer.logger = Logger.new(STDOUT)
 ```
 
 
-Define deferrer class (must have perform instance method)
+Define deferrer worker that must respond to call method
 
 ```ruby
-class WorkDeferrer
-  def perform(update)
-    puts update
-  end
+Deferrer.worker = lambda do |klass, *args|
+  # do some work
+  # Resque.enqueue(klass, *args)
 end
 ```
 
+Deferrer is usually used in combination with background processing tools like sidekiq and resque. If that's the case, Deferrer.worker can be light-weight and responsible only for pushing work to a background job.
 
-Start a worker process. It needs to have redis configured and access to deferrer classes.
+
+Start a worker process.
 
 ```ruby
 Deferrer.run(options = {})
 
 # Following `options` are available:
 #   loop_frequency - sleep between loops, default to 0.1 seconds
-#   logger         - logging mechanism, needs to respond to `info` and `error`
-#   before_each    - callback to run before processing an item, needs to respond to `call`
-#   after_each     - callback to run after processing an item, needs to respond to `call`
 #   single_run     - process items only for a single loop, useful for testing
+#   ignore_time    - don't wait for time period to expire, useful for testing
 ```
 
 
-Defer some executions
+Defer some executions:
 
 ```ruby
-Deferrer.defer_in(5, 'identifier', WorkDeferrer, 'update 1')
-Deferrer.defer_in(6, 'identifier', WorkDeferrer, 'update 2')
-Deferrer.defer_in(9, 'identifier', WorkDeferrer, 'update 3')
+Deferrer.defer_in(5, 'identifier', Worker, 'update 1')
+Deferrer.defer_in(6, 'identifier', Worker, 'update 2')
+Deferrer.defer_in(9, 'identifier', Worker, 'update 3')
 ```
 
 
-It will stack all defered executions per identifier until first timeout expires (5 seconds) and then it will only execute the last update for the expired identifier:
+It will stack all defered executions per identifier until first timeout expires (5 seconds) and then it will only execute the last update for the expired identifier, calling the deferrer worker:
 
 ```ruby
-WorkDeferrer.new.perform('update 3')
+Deferrer.worker.call('Worker', 'update 3')
 ```
 
 
 ## Testing
 
-For testing, you can switch to inline mode and executions will not be deferred, but performed inline.
+For testing, two options of the `run` method are useful. `single_run` will run the loop only once and `ignore_time` will not wait for time period to expire but execute to job now.
 
 ```ruby
-Deferrer.inline = true
+Deferrer.run(single_run: true, ignore_time: true)
 ```
 
 
