@@ -4,6 +4,7 @@ module Deferrer
       loop_frequency = options.fetch(:loop_frequency, 0.1)
       single_run     = options.fetch(:single_run, false)
       @ignore_time   = options.fetch(:ignore_time, false)
+      @inline        = options.fetch(:inline, false)
 
       raise WorkerNotConfigured unless worker
 
@@ -24,20 +25,19 @@ module Deferrer
       end
     end
 
-    def next_item
+    def next_item(key = next_key)
+      return nil unless key
+
       item         = nil
       decoded_item = nil
-      key          = next_key
 
-      if key
-        item = redis.rpop(key)
-        if item
-          decoded_item = decode(item)
-          decoded_item['key'] = key
-        end
-
-        remove(key)
+      item = redis.rpop(key)
+      if item
+        decoded_item = decode(item)
+        decoded_item['key'] = key
       end
+
+      remove(key)
 
       decoded_item
     end
@@ -52,6 +52,8 @@ module Deferrer
       item = { 'args' => args }
 
       push_item(key, item, timestamp)
+
+      process_item(next_item(key)) if @inline
     end
 
     private

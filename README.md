@@ -68,7 +68,7 @@ Deferrer.defer_in(9, 'identifier', Worker, 'update 3')
 ```
 
 
-It will stack all defered executions per identifier until first timeout expires (5 seconds) and then it will only execute the last update for the expired identifier, calling the deferrer worker:
+It will stack all defered executions per identifier until first timeout expires (5 seconds) and then it will only process the last update for the expired identifier, calling the deferrer worker:
 
 ```ruby
 Deferrer.worker.call('Worker', 'update 3')
@@ -77,12 +77,21 @@ Deferrer.worker.call('Worker', 'update 3')
 
 ## Testing
 
-For testing, two options of the `run` method are useful. `single_run` will run the loop only once and `ignore_time` will not wait for time period to expire but execute to job now.
+For testing, there are two options: single run and inline mode:
+
+If you need to test in integration that the last update is processed use:
 
 ```ruby
+# single_run - run the loop only once
+# ignore_time - process the job now, don't wait for time period to expire
 Deferrer.run(single_run: true, ignore_time: true)
 ```
 
+Alternativelly, if you want to process all updates, just use inline mode:
+
+```ruby
+Deferrer.inline = true
+```
 
 ## Contributing
 

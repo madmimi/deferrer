@@ -142,4 +142,13 @@ describe Deferrer::Runner do
       expect { Deferrer.run(single_run: true) }.to raise_error
     end
   end
+
+  describe ".inline" do
+    it "ignores time to wait and performs jobs" do
+      Deferrer.inline = true
+      expect(Deferrer.worker).to receive(:call).with('Worker', { "c" => "d"})
+
+      Deferrer.defer_in(100, identifier, 'Worker', { c: :d })
+    end
+  end
 end

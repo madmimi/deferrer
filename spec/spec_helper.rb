@@ -15,6 +15,7 @@ RSpec.configure do |config|
   config.before :each do
     Deferrer.redis.flushdb
     Deferrer.logger = nil
+    Deferrer.inline = false
     Deferrer.worker = lambda { |klass, *args| }
   end
 end
