@@ -62,9 +62,9 @@ Deferrer.run(options = {})
 Defer some executions:
 
 ```ruby
-Deferrer.defer_in(5, 'identifier', Worker, 'update 1')
-Deferrer.defer_in(6, 'identifier', Worker, 'update 2')
-Deferrer.defer_in(9, 'identifier', Worker, 'update 3')
+Deferrer.defer_in(5, 'identifier', 'Worker', 'update 1')
+Deferrer.defer_in(6, 'identifier', 'Worker', 'update 2')
+Deferrer.defer_in(9, 'identifier', 'Worker', 'update 3')
 ```
 
 
