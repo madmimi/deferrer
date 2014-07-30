@@ -9,5 +9,9 @@ module Deferrer
     def redis_config=(config)
       @redis = Redis.new(config)
     end
+
+    def log(type, message)
+      logger.send(type, message) if logger
+    end
   end
 end

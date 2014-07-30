@@ -1,5 +1,12 @@
 module Helpers
   def item_key(identifier)
-    "#{Deferrer::ITEM_KEY_PREFIX}:#{identifier}"
+    "#{Deferrer::Queue::ITEM_KEY_PREFIX}:#{identifier}"
+  end
+end
+
+class TestWorker
+  extend Deferrer::Worker
+
+  def perform(*args)
   end
 end
