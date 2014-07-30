@@ -3,7 +3,6 @@ module Deferrer
 
     attr_reader :redis
     attr_accessor :logger
-    attr_accessor :worker
     attr_accessor :inline
 
     # Deferrer.redis_config = { :host => "localhost", :port => 6379 }

@@ -4,9 +4,6 @@ module Deferrer
       loop_frequency = options.fetch(:loop_frequency, 0.1)
       single_run     = options.fetch(:single_run, false)
       @ignore_time   = options.fetch(:ignore_time, false)
-      @inline        = options.fetch(:inline, false)
-
-      raise WorkerNotConfigured unless worker
 
       loop do
         begin
@@ -42,24 +39,27 @@ module Deferrer
       decoded_item
     end
 
-    def defer_in(number_of_seconds_from_now, identifier, *args)
+    def defer_in(number_of_seconds_from_now, identifier, klass, *args)
       timestamp = Time.now + number_of_seconds_from_now
-      defer_at(timestamp, identifier, *args)
+      defer_at(timestamp, identifier, klass, *args)
     end
 
-    def defer_at(timestamp, identifier, *args)
+    def defer_at(timestamp, identifier, klass, *args)
       key  = item_key(identifier)
-      item = { 'args' => args }
+      item = build_item(klass, args)
 
       push_item(key, item, timestamp)
 
-      process_item(next_item(key)) if @inline
+      process_item(next_item(key)) if inline
     end
 
     private
     def process_item(item)
+      klass = constantize(item['class'])
+      args  = item['args']
+
       log(:info, "Processing: #{item['key']}")
-      worker.call(*item['args'])
+      klass.new.send(:perform, *args)
     end
 
     def item_key(identifier)
@@ -74,6 +74,10 @@ module Deferrer
         score = calculate_score(timestamp)
         redis.zadd(LIST_KEY, score, key)
       end
+    end
+
+    def build_item(klass, args)
+      { 'class' => klass.to_s, 'args' => args }
     end
 
     def next_key
@@ -100,6 +104,13 @@ module Deferrer
 
     def log(type, message)
       logger.send(type, message) if logger
+    end
+
+    def constantize(klass_string)
+      klass_string.split('::').inject(Object) do |object, name|
+        object = object.const_get(name)
+        object
+      end
     end
   end
 end

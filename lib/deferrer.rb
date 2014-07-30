@@ -13,10 +13,4 @@ module Deferrer
   extend Configuration
   extend JsonEncoding
   extend Runner
-
-  class WorkerNotConfigured < NotImplementedError
-    def initialize
-      super("Deferrer worker not configured")
-    end
-  end
 end
