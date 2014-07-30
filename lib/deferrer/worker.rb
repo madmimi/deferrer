@@ -6,12 +6,12 @@ module Deferrer
     end
 
     module ClassMethods
-      def defer_in(number_of_seconds_from_now, id, *args)
+      def perform_in(number_of_seconds_from_now, id, *args)
         timestamp = Time.now + number_of_seconds_from_now
-        defer_at(timestamp, id, *args)
+        perform_at(timestamp, id, *args)
       end
 
-      def defer_at(timestamp, id, *args)
+      def perform_at(timestamp, id, *args)
         item = Item.new(id, name, args)
         Deferrer::Queue.push(item, timestamp)
 

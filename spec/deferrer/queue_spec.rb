@@ -21,7 +21,7 @@ describe Deferrer::Queue do
 
   describe ".pop" do
     it "returns the next item" do
-      TestWorker.defer_at(Time.now, id, 'test')
+      TestWorker.perform_at(Time.now, id, 'test')
 
       item = queue.pop
 
@@ -30,8 +30,8 @@ describe Deferrer::Queue do
     end
 
     it "returns last update of an item" do
-      TestWorker.defer_at(Time.now - 3, id, 'update1')
-      TestWorker.defer_at(Time.now - 2, id, 'update2')
+      TestWorker.perform_at(Time.now - 3, id, 'update1')
+      TestWorker.perform_at(Time.now - 2, id, 'update2')
 
       item = queue.pop
 
@@ -44,7 +44,7 @@ describe Deferrer::Queue do
     end
 
     it "removes values from redis" do
-      TestWorker.defer_at(Time.now, id, 'test')
+      TestWorker.perform_at(Time.now, id, 'test')
 
       item = queue.pop
 
@@ -54,7 +54,7 @@ describe Deferrer::Queue do
     end
 
     it "doesn't block on empty lists" do
-      TestWorker.defer_in(-1, id, 'test')
+      TestWorker.perform_in(-1, id, 'test')
       redis.del(item_key(id))
 
       expect(queue.pop).to be_nil
