@@ -35,19 +35,21 @@ Deferrer.logger = Logger.new(STDOUT)
 ```
 
 
-Define deferrer worker that must respond to call method
+Define Deferrer worker (must respond to peform method):
 
 ```ruby
-Deferrer.worker = lambda do |klass, *args|
-  # do some work
-  # Resque.enqueue(klass, *args)
+class WorkDeferrer
+  include Deferrer::Worker
+
+  def perform(*args)
+  end
 end
 ```
 
-Deferrer is usually used in combination with background processing tools like sidekiq and resque. If that's the case, Deferrer.worker can be light-weight and responsible only for pushing work to a background job.
+Deferrer is usually used in combination with background processing tools like sidekiq and resque where the Deferrer worker is a light-weight worker that just pushed jobs on the queue.
 
 
-Start a worker process.
+Start the runner.
 
 ```ruby
 Deferrer.run(options = {})
@@ -58,20 +60,19 @@ Deferrer.run(options = {})
 #   ignore_time    - don't wait for time period to expire, useful for testing
 ```
 
-
 Defer some executions:
 
 ```ruby
-Deferrer.defer_in(5, 'identifier', 'Worker', 'update 1')
-Deferrer.defer_in(6, 'identifier', 'Worker', 'update 2')
-Deferrer.defer_in(9, 'identifier', 'Worker', 'update 3')
+WorkDeferrer.perform_in(5, 'identifier', 'update 1')
+WorkDeferrer.perform_in(6, 'identifier', 'update 2')
+WorkDeferrer.perform_in(9, 'identifier', 'update 3')
 ```
 
 
-It will stack all defered executions per identifier until first timeout expires (5 seconds) and then it will only process the last update for the expired identifier, calling the deferrer worker:
+It will stack all defered work units per identifier until first timeout expires (5 seconds) and then it will only process the last update for the expired identifier, calling the deferrer worker:
 
 ```ruby
-Deferrer.worker.call('Worker', 'update 3')
+WorkDeferrer.new.perform('update 3')
 ```
 
 
