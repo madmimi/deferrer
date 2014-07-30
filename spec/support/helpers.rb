@@ -5,7 +5,7 @@ module Helpers
 end
 
 class TestWorker
-  extend Deferrer::Worker
+  include Deferrer::Worker
 
   def perform(*args)
   end

@@ -1,18 +1,24 @@
 module Deferrer
   module Worker
 
-    def defer_in(number_of_seconds_from_now, id, *args)
-      timestamp = Time.now + number_of_seconds_from_now
-      defer_at(timestamp, id, *args)
+    def self.included(base)
+      base.extend(ClassMethods)
     end
 
-    def defer_at(timestamp, id, *args)
-      item = Item.new(id, name, args)
-      Deferrer::Queue.push(item, timestamp)
+    module ClassMethods
+      def defer_in(number_of_seconds_from_now, id, *args)
+        timestamp = Time.now + number_of_seconds_from_now
+        defer_at(timestamp, id, *args)
+      end
 
-      if Deferrer.inline
-        item = Deferrer::Queue.find_by_id(item.id)
-        Processor.new(item).process
+      def defer_at(timestamp, id, *args)
+        item = Item.new(id, name, args)
+        Deferrer::Queue.push(item, timestamp)
+
+        if Deferrer.inline
+          item = Deferrer::Queue.find_by_id(item.id)
+          Processor.new(item).process
+        end
       end
     end
   end
